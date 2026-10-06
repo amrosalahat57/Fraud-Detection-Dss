@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSS Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f7; padding: 20px; color: #333; }
+        .dashboard-container { background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 1000px; margin: 20px auto; }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
+        button { background-color: #2980b9; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background 0.3s; }
+        button:hover { background-color: #2471a3; }
+        .btn-danger { background-color: #e74c3c; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .top-actions { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
+        .filter-bar input { padding: 10px; width: 250px; border: 1px solid #ccd1d1; border-radius: 4px; font-size: 14px; outline: none; }
+        .filter-buttons { display: flex; gap: 8px; }
+        .filter-btn { padding: 8px 14px; font-size: 13px; background-color: #ecf0f1; color: #333; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .filter-btn:hover, .filter-btn.active { background-color: #2980b9; color: white; }
+
+        .chart-container { width: 100%; max-width: 350px; margin: 0 auto 30px auto; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #2c3e50; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .badge-block { color: #c0392b; font-weight: bold; }
+        .badge-review { color: #b7950b; font-weight: bold; }
+        .badge-approve { color: #27ae60; font-weight: bold; }
+        
+        .action-btn-approve { background-color: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 4px; transition: 0.2s; }
+        .action-btn-block { background-color: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        .action-btn-approve:hover { background-color: #219653; }
+        .action-btn-block:hover { background-color: #a93226; }
+    </style>
+</head>
+<body onload="loadDatabase()">
+
+<div class="dashboard-container">
+    <h2>System Database & Analytics</h2>
+    <div class="subtitle">Transaction History, Filters & Manual Review Operations</div>
+    
+    <div class="top-actions">
+        <button onclick="window.location.href='index.html'">Back to System</button>
+        <button class="btn-danger" onclick="clearDatabase()">Clear Database</button>
+    </div>
+
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="Search transactions..." onkeyup="loadDatabase()">
+        <div class="filter-buttons">
+            <button class="filter-btn active" id="btn-ALL" onclick="setFilter('ALL')">All</button>
+            <button class="filter-btn" id="btn-APPROVE" onclick="setFilter('APPROVE')">Approved</button>
+            <button class="filter-btn" id="btn-REVIEW" onclick="setFilter('MANUAL REVIEW')">Review</button>
+            <button class="filter-btn" id="btn-BLOCK" onclick="setFilter('BLOCK')">Blocked</button>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="decisionChart"></canvas>
+    </div>
+
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>Time & Date</th>
+                <th>Amount</th>
+                <th>IP Match</th>
+                <th>Failed Logins</th>
+                <th>Risk Score</th>
+                <th>Final Decision</th>
+                <th>Manual Action</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let decisionChart;
+    let currentFilter = 'ALL';
+
+    function setFilter(status) {
+        currentFilter = status;
+        let buttons = document.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        if(status === 'ALL') document.getElementById('btn-ALL').classList.add('active');
+        else if(status === 'APPROVE') document.getElementById('btn-APPROVE').classList.add('active');
+        else if(status === 'MANUAL REVIEW') document.getElementById('btn-REVIEW').classList.add('active');
+        else if(status === 'BLOCK') document.getElementById('btn-BLOCK').classList.add('active');
+        loadDatabase();
+    }
+
+    function loadDatabase() {
+        let db = JSON.parse(localStorage.getItem("dss_db")) || [];
+        let tbody = document.getElementById("tableBody");
+        let searchQuery = document.getElementById("searchInput").value.toLowerCase();
+        tbody.innerHTML = ""; 
+
+        let countApprove = 0;
+        let countReview = 0;
+        let countBlock = 0;
+
+        db.forEach((row, index) => {
+            let decisionText = row.decision;
+
+            if (decisionText.includes("BLOCK")) countBlock++;
+            else if (decisionText.includes("MANUAL REVIEW")) countReview++;
+            else countApprove++;
+
+            let matchesFilter = (currentFilter === 'ALL') || decisionText.includes(currentFilter);
+            let matchesSearch = Object.values(row).some(val => String(val).toLowerCase().includes(searchQuery));
+
+            if (matchesFilter && matchesSearch) {
+                let decisionClass = "";
+                if (decisionText.includes("BLOCK")) decisionClass = "badge-block";
+                else if (decisionText.includes("MANUAL REVIEW")) decisionClass = "badge-review";
+                else decisionClass = "badge-approve";
+
+                let actionContent = "-";
+                if (decisionText.includes("MANUAL REVIEW")) {
+                    actionContent = `
+                        <button class="action-btn-approve" onclick="resolveReview(${index}, 'APPROVE')">Approve</button>
+                        <button class="action-btn-block" onclick="resolveReview(${index}, 'BLOCK')">Block</button>
+                    `;
+                } else {
+                    actionContent = "<span style='color: #7f8c8d; font-size: 13px; font-weight: bold;'>Resolved</span>";
+                }
+
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.date}</td>
+                    <td>${row.amount}</td>
+                    <td>${row.locationMatch}</td>
+                    <td>${row.failedLogins}</td>
+                    <td><strong>${row.riskScore}</strong></td>
+                    <td class="${decisionClass}">${row.decision}</td>
+                    <td>${actionContent}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+
+        updateChart(countApprove, countReview, countBlock);
+    }
+
+    function resolveReview(index, newDecision) {
+        let db = JSON.parse(localStorage.getItem("dss_db")) || [];
+        if (db[index]) {
+            db[index].decision = newDecision + " (Manual Override)";
+            localStorage.setItem("dss_db", JSON.stringify(db));
+            loadDatabase();
+        }
+    }
+
+    function updateChart(approve, review, block) {
+        let ctx = document.getElementById('decisionChart').getContext('2d');
+        
+        if (decisionChart) {
+            decisionChart.destroy();
+        }
+
+        decisionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Approved', 'Manual Review', 'Blocked'],
+                datasets: [{
+                    data: [approve, review, block],
+                    backgroundColor: ['#27ae60', '#b7950b', '#c0392b'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+
+    function clearDatabase() {
+        if(confirm("Are you sure you want to delete all records?")) {
+            localStorage.removeItem("dss_db");
+            loadDatabase();
+        }
+    }
+</script>
+
+</body>
+</html>

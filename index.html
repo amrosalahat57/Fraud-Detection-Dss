@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Fraud Detection DSS - System</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 30px;
+            font-size: 20px;
+            text-align: center;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 15px;
+        }
+
+        .sidebar a {
+            color: #bdc3c7;
+            text-decoration: none;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #34495e;
+            color: white;
+        }
+
+        .sidebar .logout {
+            margin-top: auto;
+            color: #e74c3c;
+        }
+
+        .sidebar .logout:hover {
+            background-color: #c0392b;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: background-color 0.3s;
+        }
+
+        .header h2 {
+            color: #2c3e50;
+            font-size: 22px;
+            transition: color 0.3s;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 22px;
+            color: #7f8c8d;
+            transition: color 0.3s;
+        }
+
+        .theme-toggle:hover {
+            color: #2c3e50;
+        }
+
+        .user-info {
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+
+        .kpi-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .kpi-card {
+            background: white;
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 4px solid #2980b9;
+            transition: background-color 0.3s;
+        }
+
+        .kpi-card.green {
+            border-color: #27ae60;
+        }
+
+        .kpi-card.red {
+            border-color: #e74c3c;
+        }
+
+        .kpi-icon {
+            font-size: 30px;
+            color: #7f8c8d;
+        }
+
+        .kpi-details h4 {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .kpi-details p {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            transition: color 0.3s;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: background-color 0.3s;
+        }
+
+        .panel h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        label {
+            font-weight: 600;
+            margin-top: 15px;
+            display: block;
+            font-size: 14px;
+            color: #333;
+            transition: color 0.3s;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccd1d1;
+            background: #fff;
+            color: #333;
+            transition: 0.3s;
+        }
+
+        button.btn-primary {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            margin-top: 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button.btn-primary:hover {
+            background-color: #2471a3;
+        }
+
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            font-weight: bold;
+            text-align: left;
+            border-radius: 6px;
+            display: none;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .result-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .result-score {
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+
+        .result-level {
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+
+        .result-decision {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .risk-reasons {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+
+        .risk-reasons li {
+            margin-bottom: 5px;
+        }
+
+        .info-list {
+            list-style: none;
+        }
+
+        .info-list li {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .info-list i {
+            color: #2980b9;
+            margin-top: 3px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            right: 30px;
+            bottom: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition:
+                transform 0.4s,
+                opacity 0.4s,
+                visibility 0.4s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #toast.show {
+            visibility: visible;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #toast.success {
+            background-color: #27ae60;
+        }
+
+        #toast.warning {
+            background-color: #f39c12;
+            color: #333;
+        }
+
+        #toast.danger {
+            background-color: #c0392b;
+        }
+
+        #toast.info {
+            background-color: #2980b9;
+        }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #1a1a1a;
+            border-right: 1px solid #2d2d2d;
+        }
+
+        body.dark-mode .sidebar h3 {
+            border-bottom-color: #2d2d2d;
+        }
+
+        body.dark-mode .header,
+        body.dark-mode .kpi-card,
+        body.dark-mode .panel {
+            background-color: #1e1e1e;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode .header h2,
+        body.dark-mode .kpi-details p,
+        body.dark-mode .panel h3 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .panel h3 {
+            border-bottom-color: #2d2d2d;
+        }
+
+        body.dark-mode label,
+        body.dark-mode .info-list li {
+            color: #bbb;
+        }
+
+        body.dark-mode input[type="number"],
+        body.dark-mode select {
+            background-color: #2d2d2d;
+            color: #fff;
+            border-color: #444;
+        }
+
+        body.dark-mode .theme-toggle {
+            color: #f1c40f;
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            color: #f39c12;
+        }
+
+        @media (max-width: 900px) {
+
+            .kpi-container {
+                flex-direction: column;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                width: 210px;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+    <h3>
+        <i class="fa-solid fa-shield-halved"></i>
+        SecurePay DSS
+    </h3>
+
+    <a href="#" class="active">
+        <i class="fa-solid fa-magnifying-glass-chart"></i>
+        Risk Analysis
+    </a>
+
+    <a href="login.html">
+        <i class="fa-solid fa-database"></i>
+        Admin Dashboard
+    </a>
+
+    <a href="#" class="logout">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        Exit System
+    </a>
+
+</div>
+
+
+<div class="main-content">
+
+    <div class="header">
+
+        <h2>Live Risk Assessment Engine</h2>
+
+        <div class="header-controls">
+
+            <i
+                class="fa-solid fa-moon theme-toggle"
+                onclick="toggleDarkMode()"
+                title="Toggle Dark Mode">
+            </i>
+
+            <div class="user-info">
+                <i class="fa-solid fa-user-tie"></i>
+                System Operator
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="kpi-container">
+
+        <div class="kpi-card green">
+
+            <i class="fa-solid fa-server kpi-icon"></i>
+
+            <div class="kpi-details">
+
+                <h4>System Status</h4>
+
+                <p>Online & Active</p>
+
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card">
+
+            <i class="fa-solid fa-microchip kpi-icon"></i>
+
+            <div class="kpi-details">
+
+                <h4>Engine Version</h4>
+
+                <p>DSS v2.0</p>
+
+            </div>
+
+        </div>
+
+
+        <div class="kpi-card red">
+
+            <i class="fa-solid fa-triangle-exclamation kpi-icon"></i>
+
+            <div class="kpi-details">
+
+                <h4>Current Threat Level</h4>
+
+                <p>Elevated</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="content-grid">
+
+
+        <div class="panel">
+
+            <h3>
+                <i class="fa-solid fa-filter"></i>
+                Input Transaction Data
+            </h3>
+
+
+            <label for="amount">
+                Transaction Amount ($):
+            </label>
+
+            <input
+                type="number"
+                id="amount"
+                placeholder="Enter amount..."
+                min="0"
+                step="0.01"
+            >
+
+
+            <label for="location">
+                IP Location Match:
+            </label>
+
+            <select id="location">
+
+                <option value="yes">
+                    Yes (Matched)
+                </option>
+
+                <option value="no">
+                    No (Mismatch)
+                </option>
+
+            </select>
+
+
+            <label for="failedLogins">
+                Failed Login Attempts:
+            </label>
+
+            <input
+                type="number"
+                id="failedLogins"
+                placeholder="Enter number of attempts..."
+                min="0"
+                step="1"
+                value="0"
+            >
+
+
+            <button
+                class="btn-primary"
+                onclick="analyzeRisk()">
+
+                Analyze Risk & Decide
+
+            </button>
+
+
+            <div id="result"></div>
+
+        </div>
+
+
+        <div class="panel">
+
+            <h3>
+                <i class="fa-solid fa-circle-info"></i>
+                System Objectives & Rules
+            </h3>
+
+
+            <ul class="info-list">
+
+
+                <li>
+
+                    <i class="fa-solid fa-bullseye"></i>
+
+                    <strong>Goal:</strong>
+
+                    To assist financial managers in accepting,
+                    declining, or reviewing transactions in
+                    real-time to minimize fraud losses.
+
+                </li>
+
+
+                <li>
+
+                    <i class="fa-solid fa-money-bill-wave"></i>
+
+                    <strong>Amount Rule:</strong>
+
+                    Transaction amount contributes different
+                    risk points depending on its value.
+
+                </li>
+
+
+                <li>
+
+                    <i class="fa-solid fa-globe"></i>
+
+                    <strong>Location Rule:</strong>
+
+                    A mismatch between the billing address and
+                    the IP location adds significant risk points.
+
+                </li>
+
+
+                <li>
+
+                    <i class="fa-solid fa-user-lock"></i>
+
+                    <strong>Security Rule:</strong>
+
+                    Failed login attempts increase the risk level
+                    and may indicate potential account takeover.
+
+                </li>
+
+
+            </ul>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+
+        &copy; 2026 Decision Support Systems (DSS) Project -
+        Supervised by Dr. Mamoon Obiedat
+
+    </div>
+
+</div>
+
+
+<div id="toast">
+
+    <i id="toast-icon" class="fa-solid"></i>
+
+    <span id="toast-msg"></span>
+
+</div>
+
+
+<script>
+
+
+    // ==========================================
+    // Dark Mode
+    // ==========================================
+
+    function toggleDarkMode() {
+
+        document.body.classList.toggle('dark-mode');
+
+        let icon =
+            document.querySelector('.theme-toggle');
+
+
+        if (
+            document.body.classList.contains('dark-mode')
+        ) {
+
+            icon.classList.remove('fa-moon');
+
+            icon.classList.add('fa-sun');
+
+        } else {
+
+            icon.classList.remove('fa-sun');
+
+            icon.classList.add('fa-moon');
+
+        }
+    }
+
+
+
+    // ==========================================
+    // Toast Notification
+    // ==========================================
+
+    function showToast(message, type) {
+
+        let toast =
+            document.getElementById("toast");
+
+        let msg =
+            document.getElementById("toast-msg");
+
+        let icon =
+            document.getElementById("toast-icon");
+
+
+        toast.className = "";
+
+        icon.className = "fa-solid";
+
+
+        if (type === "BLOCK") {
+
+            toast.classList.add("danger");
+
+            icon.classList.add(
+                "fa-shield-virus"
+            );
+
+        }
+
+        else if (type === "MANUAL REVIEW") {
+
+            toast.classList.add("warning");
+
+            icon.classList.add(
+                "fa-triangle-exclamation"
+            );
+
+        }
+
+        else if (type === "INFO") {
+
+            toast.classList.add("info");
+
+            icon.classList.add(
+                "fa-circle-info"
+            );
+
+        }
+
+        else {
+
+            toast.classList.add("success");
+
+            icon.classList.add(
+                "fa-shield-check"
+            );
+
+        }
+
+
+        msg.innerText = message;
+
+        toast.classList.add("show");
+
+
+        setTimeout(function() {
+
+            toast.classList.remove("show");
+
+        }, 3000);
+    }
+
+
+
+    // ==========================================
+    // Main Risk Analysis Function
+    // ==========================================
+
+    function analyzeRisk() {
+
+
+        let amountInput =
+            document.getElementById("amount").value;
+
+
+        let amount =
+            parseFloat(amountInput);
+
+
+        let locationMatch =
+            document.getElementById("location").value;
+
+
+        let failedLoginsInput =
+            document.getElementById("failedLogins").value;
+
+
+        let failedLogins =
+            parseInt(failedLoginsInput);
+
+
+        let resultDiv =
+            document.getElementById("result");
+
+
+        // ==========================================
+        // Input Validation
+        // ==========================================
+
+        if (
+            amountInput === "" ||
+            isNaN(amount) ||
+            amount < 0
+        ) {
+
+            resultDiv.style.display = "block";
+
+            resultDiv.style.backgroundColor =
+                "#fadbd8";
+
+            resultDiv.style.color =
+                "#c0392b";
+
+
+            resultDiv.innerHTML = `
+                <div class="result-title">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    Invalid Input
+                </div>
+
+                Please enter a valid transaction amount.
+            `;
+
+
+            showToast(
+                "Please enter a valid amount.",
+                "INFO"
+            );
+
+
+            return;
+        }
+
+
+        if (
+            isNaN(failedLogins) ||
+            failedLogins < 0
+        ) {
+
+            failedLogins = 0;
+
+        }
+
+
+
+        // ==========================================
+        // Risk Score Initialization
+        // ==========================================
+
+        let riskScore = 0;
+
+        let riskReasons = [];
+
+
+
+        // ==========================================
+        // Rule 1: Transaction Amount
+        // ==========================================
+
+        if (amount <= 500) {
+
+            riskScore += 0;
+
+        }
+
+        else if (amount <= 1000) {
+
+            riskScore += 10;
+
+            riskReasons.push(
+                "Medium transaction amount: +10 points"
+            );
+
+        }
+
+        else if (amount <= 5000) {
+
+            riskScore += 20;
+
+            riskReasons.push(
+                "High transaction amount: +20 points"
+            );
+
+        }
+
+        else {
+
+            riskScore += 30;
+
+            riskReasons.push(
+                "Very high transaction amount: +30 points"
+            );
+
+        }
+
+
+
+        // ==========================================
+        // Rule 2: IP Location
+        // ==========================================
+
+        if (locationMatch === "no") {
+
+            riskScore += 40;
+
+            riskReasons.push(
+                "IP location mismatch: +40 points"
+            );
+
+        }
+
+
+
+        // ==========================================
+        // Rule 3: Failed Login Attempts
+        // ==========================================
+
+        if (failedLogins === 1) {
+
+            riskScore += 5;
+
+            riskReasons.push(
+                "1 failed login attempt: +5 points"
+            );
+
+        }
+
+        else if (failedLogins === 2) {
+
+            riskScore += 15;
+
+            riskReasons.push(
+                "2 failed login attempts: +15 points"
+            );
+
+        }
+
+        else if (failedLogins > 2) {
+
+            riskScore += 30;
+
+            riskReasons.push(
+                "More than 2 failed login attempts: +30 points"
+            );
+
+        }
+
+
+
+        // ==========================================
+        // Decision
+        // ==========================================
+
+        let decision = "";
+
+        let riskLevel = "";
+
+
+
+        // HIGH RISK
+
+        if (riskScore >= 70) {
+
+            decision = "BLOCK";
+
+            riskLevel = "HIGH RISK";
+
+
+            resultDiv.style.backgroundColor =
+                "#fadbd8";
+
+            resultDiv.style.color =
+                "#c0392b";
+
+
+            showToast(
+                "High Risk! Transaction Blocked.",
+                "BLOCK"
+            );
+
+        }
+
+
+        // MEDIUM RISK
+
+        else if (riskScore >= 40) {
+
+            decision = "MANUAL REVIEW";
+
+            riskLevel = "MEDIUM RISK";
+
+
+            resultDiv.style.backgroundColor =
+                "#fcf3cf";
+
+            resultDiv.style.color =
+               
+
+
+            showToast(
+                "Medium Risk! Flagged for Review.",
+                "MANUAL REVIEW"
+            );
+
+        }
+
+
+        // LOW RISK
+
+        else {
+
+            decision = "APPROVE";
+
+            riskLevel = "LOW RISK";
+
+
+            resultDiv.style.backgroundColor =
+                "#d5f5e3";
+
+            resultDiv.style.color =
+                "#27ae60";
+
+
+            showToast(
+                "Low Risk! Transaction Approved.",
+                "APPROVE"
+            );
+
+        }
+
+
+
+        // ==========================================
+        // Risk Reasons
+        // ==========================================
+
+        let reasonsHTML = "";
+
+
+        if (riskReasons.length > 0) {
+
+            reasonsHTML = `
+
+                <div style="margin-top: 10px;">
+
+                    <strong>Risk Factors:</strong>
+
+                    <ul class="risk-reasons">
+
+                        ${
+                            riskReasons
+                                .map(
+                                    reason =>
+                                        `<li>${reason}</li>`
+                                )
+                                .join("")
+                        }
+
+                    </ul>
+
+                </div>
+
+            `;
+
+        }
+
+        else {
+
+            reasonsHTML = `
+
+                <div style="margin-top: 10px;">
+
+                    <strong>Risk Factors:</strong>
+
+                    <div style="margin-top: 5px;">
+
+                        No significant risk factors detected.
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+
+
+        // ==========================================
+        // Display Result
+        // ==========================================
+
+        resultDiv.innerHTML = `
+
+            <div class="result-title">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                Risk Assessment Result
+
+            </div>
+
+
+            <div class="result-score">
+
+                Risk Score: ${riskScore}%
+
+            </div>
+
+
+            <div class="result-level">
+
+                Risk Level: ${riskLevel}
+
+            </div>
+
+
+            <div class="result-decision">
+
+                Decision: ${decision}
+
+            </div>
+
+
+            ${reasonsHTML}
+
+        `;
+
+
+        resultDiv.style.display = "block";
+
+
+
+        // ==========================================
+        // Save Transaction
+        // ==========================================
+
+        saveToDatabase(
+            amount,
+            locationMatch,
+            failedLogins,
+            riskScore,
+            riskLevel,
+            decision,
+            riskReasons
+        );
+
+    }
+
+
+
+    // ==========================================
+    // Save Transaction
+    // ==========================================
+
+    function saveToDatabase(
+        amount,
+        locationMatch,
+        failedLogins,
+        riskScore,
+        riskLevel,
+        decision,
+        riskReasons
+    ) {
+
+
+        let transaction = {
+
+            date:
+                new Date().toLocaleString(),
+
+            amount:
+                "$" + amount.toFixed(2),
+
+            locationMatch:
+                locationMatch.toUpperCase(),
+
+            failedLogins:
+                failedLogins,
+
+            riskScore:
+                riskScore + "%",
+
+            riskLevel:
+                riskLevel,
+
+            decision:
+                decision,
+
+            riskReasons:
+                riskReasons
+
+        };
+
+
+        let db =
+            JSON.parse(
+                localStorage.getItem("dss_db")
+            ) || [];
+
+
+        db.push(transaction);
+
+
+        localStorage.setItem(
+            "dss_db",
+            JSON.stringify(db)
+        );
+
+    }
+
+</script>
+
+</body>
+</html>
